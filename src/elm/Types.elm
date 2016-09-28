@@ -1,38 +1,50 @@
 module Types exposing (..)
 
-import Matrix
-import Maybe
-import Array
+import Matrix exposing (Matrix)
+import Random exposing (Seed)
+import Dict exposing (Dict)
 
 
-type alias Model =
-    { board : Matrix.Matrix Cell
-    , message : String
-    , players : List Player
-    , round' : Round
-    , tiles : List Color
-    , tileIdx : Int
-    , gameStep : GameStep
+type GameState
+    = Config ConfigState
+    | InGame InGameState
+    | OutGame InGameState
+
+
+type alias ConfigState =
+    { player1name : String
+    , player2name : String
     }
+
+
+type alias InGameState =
+    { board : Board
+    , player1 : Player
+    , player2 : Player
+    , turn : Role
+    , tiles : TileState
+    , round : Int
+    , message : String
+    }
+
+
+type alias Board =
+    Matrix Cell
 
 
 type alias Cell =
-    { x : Int
-    , y : Int
+    { colour : Maybe Colour
     , highlight : Bool
-    , content : Maybe Color
+    , x : Int
+    , y : Int
     }
 
 
-type Round
-    = Yin
-    | Yang
-
-
-type GameStep
-    = Welcome
-    | GamePlay Role
-    | GameOver
+type alias Player =
+    { name : String
+    , role : Role
+    , score : Int
+    }
 
 
 type Role
@@ -40,30 +52,25 @@ type Role
     | Order
 
 
-type alias Player =
-    { name : String
-    , score : Int
-    , role : Role
+type Colour
+    = Red
+    | Orange
+    | Green
+    | Blue
+    | Violet
+
+
+type alias TileState =
+    { current : Maybe Colour
+    , ref : Dict String Int
+    , seed : Seed
     }
 
 
-type Msg
-    = NoOp
-    | Start
-    | MakeTiles Array.Array
-    | ValidateMove Int Int
-    | SetTile Cell Color
-    | PickupTile Int Int
-    | ScoreRound (Matrix.Matrix Cell)
-    | Winner ( Int, Int )
-
-
-type Color
-    = NoColor
-    | Red
-    | Orange
-    | Yellow
-    | Green
-    | Aqua
-    | Blue
-    | Violet
+type Action
+    = StartGame
+    | NextRound
+    | NewGame
+    | Choose Int Int
+    | SetPlayer1 String
+    | SetPlayer2 String
