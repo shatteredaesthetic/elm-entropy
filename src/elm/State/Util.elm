@@ -1,7 +1,7 @@
 module State.Util exposing (..)
 
 import Matrix exposing (..)
-import Matrix.Extra as MExtra
+import Matrix.Extra exposing (neighboursFour)
 import Array
 import Types exposing (..)
 
@@ -44,31 +44,55 @@ makeBoard =
 
 isBoardFull : Board -> Bool
 isBoardFull board =
-    Matrix.map (\cell -> cell.colour) board
+    board
+        |> Matrix.map (\cell -> cell.colour)
         |> Matrix.filter (\colour -> colour == Nothing)
         |> Array.isEmpty
 
 
-validateMove : Int -> Int -> InGameState -> Bool
-validateMove x y state =
+validateOrder : Int -> Int -> InGameState -> Bool
+validateOrder x y state =
     case Matrix.get x y state.board of
         Nothing ->
             False
 
         Just cell ->
-            let
-                neighbors =
-                    MExtra.neighboursFour x y state.board
+            cell.highlight
 
-                isANeighbor =
-                    List.member cell neighbors
-            in
-                case cell.colour of
-                    Nothing ->
-                        if state.tiles.current == Nothing && isANeighbor then
-                            False
-                        else
-                            True
 
-                    Just _ ->
-                        False
+validateChaos : Int -> Int -> InGameState -> Bool
+validateChaos x y state =
+    case Matrix.get x y state.board of
+        Nothing ->
+            False
+
+        Just cell ->
+            case cell.colour of
+                Just _ ->
+                    False
+
+                Nothing ->
+                    True
+
+
+highlightNeighbors : Int -> Int -> Matrix Cell -> Matrix Cell
+highlightNeighbors x y board =
+    let
+        highlightCell cell =
+            case cell.colour of
+                Nothing ->
+                    { cell | highlight = not cell.highlight }
+
+                Just _ ->
+                    cell
+    in
+        board
+            |> Matrix.update (x + 1) y highlightCell
+            |> Matrix.update (x - 1) y highlightCell
+            |> Matrix.update x (y + 1) highlightCell
+            |> Matrix.update x (y - 1) highlightCell
+
+
+removeHighlights : Matrix Cell -> Matrix Cell
+removeHighlights board =
+    Matrix.map (\cell -> { cell | highlight = False }) board

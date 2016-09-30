@@ -40,7 +40,10 @@ updateOrder x y state =
                     in
                         InGame
                             { state
-                                | board = Matrix.update x y (\cell -> { cell | colour = Nothing }) state.board
+                                | board =
+                                    state.board
+                                        |> Matrix.update x y (\cell -> { cell | colour = Nothing })
+                                        |> highlightNeighbors x y
                                 , tiles = tiles'
                                 , message = "Place tile in any Empty Cell."
                             }
@@ -55,10 +58,13 @@ updateOrder x y state =
                         cell' =
                             Cell (Just tile) False x y
                     in
-                        if validateMove x y state then
+                        if validateOrder x y state then
                             InGame
                                 { state
-                                    | board = Matrix.set x y cell' state.board
+                                    | board =
+                                        state.board
+                                            |> Matrix.set x y cell'
+                                            |> removeHighlights
                                     , tiles = randomTile state.tiles
                                     , turn = Chaos
                                     , message = "Place new Tile in any Empty Cell."
@@ -86,13 +92,13 @@ updateChaos x y state =
             True ->
                 case state.round of
                     1 ->
-                        makeBreak state board' True
+                        makeBreak state board' Player1
 
                     _ ->
-                        makeBreak state board' False
+                        makeBreak state board' Player2
 
             False ->
-                if validateMove x y state then
+                if validateChaos x y state then
                     InGame
                         { state
                             | board = board'
@@ -104,24 +110,15 @@ updateChaos x y state =
                     InGame { state | message = "You can't put a Tile on another Tile." }
 
 
-makeBreak : InGameState -> Board -> Bool -> GameState
+type PlayerProxy
+    = Player1
+    | Player2
+
+
+makeBreak : InGameState -> Board -> PlayerProxy -> GameState
 makeBreak state newBoard isPlyr1 =
     case isPlyr1 of
-        False ->
-            let
-                player1 =
-                    state.player1
-
-                player1' =
-                    { player1 | role = switchRole player1.role }
-            in
-                OutGame
-                    { state
-                        | board = newBoard
-                        , player2 = scoreChaos state.player2 newBoard
-                    }
-
-        True ->
+        Player1 ->
             let
                 player2 =
                     state.player2
@@ -134,4 +131,18 @@ makeBreak state newBoard isPlyr1 =
                         | board = newBoard
                         , player1 = scoreChaos state.player1 newBoard
                         , player2 = player2'
+                    }
+
+        Player2 ->
+            let
+                player1 =
+                    state.player1
+
+                player1' =
+                    { player1 | role = switchRole player1.role }
+            in
+                OutGame
+                    { state
+                        | board = newBoard
+                        , player2 = scoreChaos state.player2 newBoard
                     }

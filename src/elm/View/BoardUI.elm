@@ -115,14 +115,19 @@ cellView cell =
                     [ ( "background", "#1e0812" ) ]
 
                 Just colour ->
-                    [ ( "background", tileToString colour ) ]
+                    [ ( "background", getHexColor colour ) ]
     in
         div
             [ class "board-cell"
-            , styleList [ bgColor, tileStyle ]
+            , styleList [ flexStyle, centerStyle, tileStyle, (highlightStyle cell) ]
             , onClick (Choose cell.x cell.y)
             ]
-            []
+            [ div
+                [ class "cell-btn"
+                , styleList [ cellBtnStyle, bgColor ]
+                ]
+                []
+            ]
 
 
 makeBoardRow : Matrix (Html Action) -> Int -> Html Action
@@ -161,6 +166,16 @@ makePlayerHeader player =
         ]
 
 
+highlightStyle : Cell -> List Attr
+highlightStyle cell =
+    case cell.highlight of
+        True ->
+            [ "background" => "#f4fc14" ]
+
+        False ->
+            []
+
+
 currentTileStyle : InGameState -> List Attr
 currentTileStyle state =
     let
@@ -170,7 +185,7 @@ currentTileStyle state =
                     [ "background" => "#1e0812" ]
 
                 Just colour ->
-                    [ "background" => tileToString colour ]
+                    [ "background" => getHexColor colour ]
 
         base =
             [ "width" => "80%"
@@ -192,7 +207,9 @@ tileStyle : List Attr
 tileStyle =
     [ "flex" => "1 0 auto"
     , "border" => "2px solid #fcdfed"
-    , "border-radius" => "3px"
+    , "border-radius" => "4px"
+    , "z-index" => "1"
+    , "background" => "#1e0812"
     ]
 
 
@@ -257,4 +274,14 @@ tokenStyle =
     , "font-weight" => "bolder"
     , "padding" => "5px"
     , "color" => "#b61e64"
+    ]
+
+
+cellBtnStyle : List Attr
+cellBtnStyle =
+    [ "width" => "90%"
+    , "height" => "90%"
+    , "border-radius" => "5px"
+    , "box-sizing" => "border-box"
+    , "z-index" => "5"
     ]
